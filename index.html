@@ -13,6 +13,7 @@ const ACADEMY = 'API BASKETBALL ACADEMY';
 const PDPA_OWNER = 'API Basketball Academy';           // ผู้เก็บข้อมูล
 const PDPA_CONTACT = 'LINE OA API Basketball Academy';    // เช่น LINE OA นี้ / เบอร์โค้ช
 const PACKAGE_PRICE = 2990;
+const SINGLE_PRICE = 300;
 </script>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -205,12 +206,16 @@ async function pageCheckin(code, studentIds) {
 
 function resultHtml(x) {
   const nk = esc(x.nickname);
-  const where = x.packageNo ? `ครั้งที่ ${x.used} จาก 10 · แพ็กเกจที่ ${x.packageNo}` : 'นอกแพ็กเกจ (ค้างต่อ)';
+  const single = x.mode !== 'package';
+  const where = x.packageNo ? (x.sessions === 1 ? 'จ่ายรายครั้งแล้ว' : `ครั้งที่ ${x.used} จาก ${x.sessions} · แพ็กเกจที่ ${x.packageNo}`)
+    : single ? 'ยังไม่ได้จ่ายค่าเรียนวันนี้' : 'นอกแพ็กเกจ (ค้างต่อ)';
   const head = x.already
     ? `<div class="big"><div class="tick blue">✓</div><div class="t1">น้อง${nk} เช็คชื่อแล้ววันนี้ ✓</div><div class="t2">นับวันละ 1 ครั้ง</div><p class="muted">${where}</p></div>`
     : `<div class="big"><div class="tick">✓</div><div class="t1">น้อง${nk} เช็คชื่อแล้ว</div><div class="t2">${where}</div><p class="muted">มาแล้วรวม ${x.count} ครั้ง</p></div>`;
   let pk = '';
-  if (x.owed) pk = '<div class="banner due">แพ็กเกจหมดแล้ว ครั้งนี้จะนับเข้าแพ็กเกจใหม่เมื่อต่อกับโค้ช</div>';
+  if (x.owed) pk = single
+    ? `<div class="banner due">จ่ายค่าเรียนได้ที่โค้ช: รายครั้ง ${SINGLE_PRICE} บาท หรือแพ็กเกจ 10 ครั้ง ${PACKAGE_PRICE.toLocaleString()} บาท</div>`
+    : '<div class="banner due">แพ็กเกจหมดแล้ว ครั้งนี้จะนับเข้าแพ็กเกจใหม่เมื่อต่อกับโค้ช</div>';
   else if (x.completed) pk = `<div class="banner done">ครบแพ็กเกจที่ ${x.packageNo} แล้ว 🎉<br><span style="font-size:13px">ต่อแพ็กเกจ 10 ครั้ง ${PACKAGE_PRICE.toLocaleString()} บาท ได้ที่โค้ช</span></div>`;
   else if (x.left === 1) pk = '<div class="banner gold">เหลืออีก 1 ครั้งในแพ็กเกจนี้</div>';
   const nb = x.newBadge ? `<div class="banner gold">ได้เหรียญใหม่! ${x.newBadge.icon} <b>${esc(x.newBadge.name)}</b></div>` : '';
@@ -227,24 +232,29 @@ async function pageHistory() {
 function cardHtml(c) {
   const st = c.pkg, b = c.level.badge, next = c.level.next;
   const p = st.current || st.packages[st.packages.length - 1] || null, used = p ? p.used : 0;
-  const state = st.owed ? `<div class="banner due">แพ็กเกจหมดแล้ว มาเรียนเกิน ${st.owed} ครั้ง ต่อแพ็กเกจได้ที่โค้ช</div>`
+  const single = st.mode === 'single' && !(st.current && st.current.sessions > 1);
+  const state = st.owed ? (st.mode === 'package'
+      ? `<div class="banner due">แพ็กเกจหมดแล้ว มาเรียนเกิน ${st.owed} ครั้ง ต่อแพ็กเกจได้ที่โค้ช</div>`
+      : `<div class="banner due">ยังไม่ได้จ่ายค่าเรียน ${st.owed} ครั้ง จ่ายได้ที่โค้ช</div>`)
+    : single ? ''
     : p && !st.current ? `<div class="banner done">ครบแพ็กเกจที่ ${p.no} แล้ว 🎉 ต่อแพ็กเกจใหม่ได้ที่โค้ช</div>`
     : st.left === 1 ? '<div class="banner gold">เหลืออีก 1 ครั้งในแพ็กเกจนี้</div>' : '';
   const from = b ? b.at : 0, pct = next ? Math.round((c.count - from) / (next.at - from) * 100) : 100;
   return `<div class="card" style="background:${b ? BADGE_BG[b.at] : 'linear-gradient(135deg,#6b7590,#3b4360)'}">
     <div class="top"><span>${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
     <div class="nm">น้อง${esc(c.nickname)}</div><div class="sub">${esc(c.fullName)} · สมาชิกตั้งแต่ ${thDate(c.registeredAt)}</div>
+    ${single ? `<div class="pk">จ่ายรายครั้ง</div><div class="cnt"><b>${c.count}</b><span>ครั้งที่มาเรียน</span></div>` : `
     <div class="left"><b>${st.current ? st.left : 0}</b><span>ครั้งที่เหลือ</span></div>
     <div class="pk">${p ? `แพ็กเกจที่ ${p.no} · ซื้อ ${thDate(p.boughtAt)}` : 'ยังไม่มีแพ็กเกจ'}</div>
     <div class="cnt"><b>${used}</b><span>/ ${p ? p.sessions : 10} ครั้ง</span></div>
-    <div class="dots">${Array.from({ length: p ? p.sessions : 10 }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="dots">${Array.from({ length: p ? p.sessions : 10 }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>`}
     <span class="lvl">${b ? b.icon + ' ' + esc(b.name) : 'สมาชิกใหม่'} · มาแล้วรวม ${c.count} ครั้ง</span></div>
   ${state}
   <div class="prog">${next ? `<span>มาอีก <b>${next.at - c.count}</b> ครั้ง ได้เหรียญ ${next.icon} ${esc(next.name)}</span>` : '<span>ได้ครบทุกเหรียญแล้ว 👑</span>'}<div class="bar"><i style="width:${pct}%"></i></div></div>
   <div class="bdg">${BADGES.map(x => `<div class="${c.count >= x.at ? '' : 'off'}"><b>${x.icon}</b>${x.name}<br>${x.at} ครั้ง</div>`).join('')}</div>
   <details><summary>ประวัติการมาเรียน (${c.count} ครั้ง)</summary>
-    ${st.owed ? `<h4>ค้างต่อแพ็กเกจ</h4><ol>${st.owedDates.slice().reverse().map(d => `<li>${thDate(d)}</li>`).join('')}</ol>` : ''}
-    ${st.packages.slice().reverse().map(k => `<h4>แพ็กเกจที่ ${k.no} · ${k.used}/${k.sessions}</h4><ol>${k.dates.map(d => `<li>${thDate(d)}</li>`).join('')}</ol>`).join('')}
+    ${st.owed ? `<h4>${st.mode === 'package' ? 'ค้างต่อแพ็กเกจ' : 'ยังไม่ได้จ่าย'}</h4><ol>${st.owedDates.slice().reverse().map(d => `<li>${thDate(d)}</li>`).join('')}</ol>` : ''}
+    ${st.packages.slice().reverse().map(k => `<h4>${k.sessions === 1 ? 'จ่ายรายครั้ง' : `แพ็กเกจที่ ${k.no} · ${k.used}/${k.sessions}`}</h4><ol>${k.dates.map(d => `<li>${thDate(d)}</li>`).join('')}</ol>`).join('')}
   </details>`;
 }
 
@@ -267,23 +277,25 @@ async function pageCoach() {
     <div class="kpi"><div><b>${v.today.length}</b>มาวันนี้</div><div><b>${v.newToday.length}</b>สมัครใหม่</div><div><b>${v.pending}</b>รออนุมัติ</div></div>
     <div class="box"><h3>มาแล้ววันนี้</h3>${v.today.length ? v.today.map(t => `<div class="row"><span>${esc(t.time)} · น้อง${esc(t.nickname)}</span>${pill(t.flag)}</div>`).join('') : '<p class="muted">ยังไม่มีใครเช็คชื่อ</p>'}</div>
     ${v.newToday.length ? `<div class="box"><h3>สมัครใหม่วันนี้</h3>${v.newToday.map(n => `<div class="row"><span>น้อง${esc(n.nickname)}</span></div>`).join('')}</div>` : ''}
-    <div class="box"><h3>แพ็กเกจที่ต้องดู</h3>${due.length ? due.map(s => `<div class="row"><span>น้อง${esc(s.nickname)} ${pill(s.flag)}</span><button class="mini" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">รับเงินแล้ว · เพิ่มแพ็กเกจ</button></div>`).join('') : '<p class="muted">ทุกคนยังมีครั้งเหลือ</p>'}
+    <div class="box"><h3>ค่าเรียนที่ต้องดู</h3>${due.length ? due.map(s => `<div class="row" style="flex-wrap:wrap"><span>น้อง${esc(s.nickname)} ${pill(s.flag)}</span><span style="display:flex;gap:6px"><button class="mini" data-plan="single" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">รับ ${SINGLE_PRICE} · รายครั้ง</button><button class="mini" data-plan="pkg10" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">รับ ${PACKAGE_PRICE.toLocaleString()} · 10 ครั้ง</button></span></div>`).join('') : '<p class="muted">ไม่มีใครค้างจ่าย</p>'}
       ${v.pending ? '<p class="muted">มี LINE รออนุมัติ: ติ๊กช่อง approved ในแท็บ Links ของ Google Sheet</p>' : ''}</div>`;
-  document.querySelectorAll('.mini').forEach(b => b.onclick = () => renew(b.dataset.sid, b.dataset.nk, b));
+  document.querySelectorAll('.mini').forEach(b => b.onclick = () => renew(b.dataset.sid, b.dataset.nk, b, b.dataset.plan));
 }
 
 let coachBusy = false; // pause the 15s refresh while a package is being added (no double credit)
-async function renew(sid, nk, btn) {
+async function renew(sid, nk, btn, plan) {
   coachBusy = true;
-  try { await renewInner(sid, nk, btn); } finally { coachBusy = false; }
+  try { await renewInner(sid, nk, btn, plan); } finally { coachBusy = false; }
   pageCoach().catch(() => {});
 }
-async function renewInner(sid, nk, btn) {
-  if (!confirm(`รับเงิน ${PACKAGE_PRICE.toLocaleString()} บาท จากน้อง${nk} แล้ว?\nจะเพิ่มแพ็กเกจ 10 ครั้งให้`)) return;
-  const size = (prompt('ไซซ์เสื้อ (เว้นว่างได้)') || '').trim();
+async function renewInner(sid, nk, btn, plan) {
+  const single = plan === 'single';
+  const what = single ? `ค่าเรียนรายครั้ง ${SINGLE_PRICE} บาท` : `แพ็กเกจ 10 ครั้ง ${PACKAGE_PRICE.toLocaleString()} บาท (แถมเสื้อ)`;
+  if (!confirm(`รับเงิน${what} จากน้อง${nk} แล้ว?`)) return;
+  const size = single ? '' : (prompt('ไซซ์เสื้อ (เว้นว่างได้)') || '').trim();
   btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
-  const r = await api('addPackage', { studentId: sid, shirtSize: size });
-  alert(r.status === 'added' ? `เพิ่มแพ็กเกจให้น้อง${nk} แล้ว` : 'เพิ่มไม่สำเร็จ');
+  const r = await api('addPackage', { studentId: sid, shirtSize: size, plan });
+  alert(r.status === 'added' ? `บันทึก${single ? 'ค่าเรียนรายครั้ง' : 'แพ็กเกจ'}ให้น้อง${nk} แล้ว` : 'บันทึกไม่สำเร็จ');
 }
 
 // ---------- start ----------

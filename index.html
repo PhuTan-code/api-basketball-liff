@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>API Basketball Academy</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap">
+<script>
+// ===== ตั้งค่า (ไม่มีความลับในไฟล์นี้) =====
+const LIFF_ID = '2012745701-mzhuuxrn';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQuNPCYHEsQpojZbrHHeVhDOy2zuzsK0uxC0JvjdFpDq0Ar1bKuZBdZX_LasO_uSF1/exec'; // test deploy (PHUTAN) — replace when coach redeploys
+const ACADEMY = 'API BASKETBALL ACADEMY';
+const PDPA_OWNER = 'API Basketball Academy';           // ผู้เก็บข้อมูล
+const PDPA_CONTACT = 'LINE OA API Basketball Academy';    // เช่น LINE OA นี้ / เบอร์โค้ช
+const PACKAGE_PRICE = 2990;
+</script>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--display:"Sarabun",system-ui,sans-serif;--body:"Sarabun",system-ui,sans-serif;
+  --navy:#0a2a8a;--blue:#1f56d6;--orange:#ff6f1f;--ok:#16a34a;--warn:#b45309;--bad:#b91c1c;--muted:#5b6687;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6fb;color:#111;font-family:var(--body);font-size:16px;line-height:1.6}
+b,strong,summary,th{font-weight:600}
+main{max-width:480px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left)) 40px;display:flex;flex-direction:column;gap:16px}
+h2{font:600 24px/1.3 var(--display);margin:0;color:var(--navy)}
+p{margin:0}
+.muted{color:var(--muted);font-size:14px}
+.f{display:flex;flex-direction:column;gap:4px;font-size:15px;color:#333}
+.f input,.f select{font:inherit;font-size:17px;padding:12px 14px;border:1.5px solid #cfd6ea;border-radius:12px;background:#fff;color:#111}
+.f input:focus{outline:none;border-color:var(--blue)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg label{position:relative;border:1.5px solid #cfd6ea;border-radius:12px;padding:12px;text-align:center;background:#fff;cursor:pointer}
+.seg input{position:absolute;opacity:0}
+.seg label:has(input:checked){border-color:var(--blue);background:#e9f0ff;color:var(--navy);font-weight:600}
+.pdpa{display:flex;gap:10px;font-size:14px;color:#444;align-items:flex-start;background:#fff;border-radius:12px;padding:12px}
+.pdpa input{width:22px;height:22px;flex:none;margin-top:2px}
+.err{color:var(--bad);font-weight:600}
+.cta{all:unset;box-sizing:border-box;width:100%;cursor:pointer;text-align:center;font:600 19px var(--display);color:#fff;padding:15px;border-radius:999px;background:linear-gradient(#ff9a3c,#dc4c06);box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
+.cta.blue{background:linear-gradient(#2a60e6,#0a2a8a)}
+.cta.ghost{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 2px #cfd6ea}
+.cta[disabled]{opacity:.5;pointer-events:none}
+.cta:focus-visible{outline:3px solid #ffb35c;outline-offset:2px}
+.big{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:12px 4px}
+.tick{width:96px;height:96px;border-radius:50%;background:linear-gradient(#5be38a,#16a34a);color:#fff;font-size:56px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px rgba(22,163,74,.3)}
+.tick.blue{background:linear-gradient(#4f8bff,#0a2a8a)}.tick.wait{background:linear-gradient(#ffb35c,#e1500a)}.tick.no{background:linear-gradient(#f87171,#b91c1c)}
+.t1{font:600 30px/1.25 var(--display)}
+.t2{font:600 20px var(--display);color:var(--navy)}
+.banner{border-radius:16px;padding:14px 16px;text-align:center;font-weight:600}
+.banner.gold{background:linear-gradient(135deg,#fff3c4,#ffd36b);color:#6b4500}
+.banner.done{background:linear-gradient(135deg,#ffe4d1,#ffb98a);color:#7a2e00}
+.banner.due{background:#fee2e2;color:#991b1b}
+.kid{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:14px;font-size:18px;cursor:pointer}
+.kid input{width:24px;height:24px}
+.card{border-radius:20px;padding:18px;color:#fff;position:relative;overflow:hidden;box-shadow:0 12px 24px rgba(10,42,138,.25)}
+.card::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+.card .top{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;opacity:.85}
+.card .nm{font:600 30px/1.2 var(--display);margin-top:8px}
+.card .sub{font-size:13px;opacity:.85}
+.card .pk{margin-top:12px;font-size:13px;opacity:.9}
+.card .cnt{display:flex;align-items:baseline;gap:6px}
+.card .cnt b{font:600 46px/1 var(--display);font-variant-numeric:tabular-nums}
+.dots{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px;position:relative;z-index:1}
+.dots i{height:12px;border-radius:6px;background:rgba(255,255,255,.25)}.dots i.on{background:#fff}
+.card .lvl{display:inline-block;margin-top:10px;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.card .left{position:absolute;right:18px;top:62px;text-align:right;z-index:1}
+.card .left b{display:block;font:600 32px/1 var(--display)}.card .left span{font-size:12px;opacity:.85}
+.prog{background:#fff;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:#444}
+.bar{height:10px;border-radius:5px;background:#e6ebf7;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ff9a3c,#ff6f1f)}
+.bdg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.bdg div{background:#fff;border-radius:12px;padding:8px 2px;text-align:center;font-size:11px;color:#333;line-height:1.3}
+.bdg div b{display:block;font-size:24px;line-height:1.3}.bdg .off{opacity:.3;filter:grayscale(1)}
+details{background:#fff;border-radius:14px;padding:12px 14px;font-size:14px}
+summary{cursor:pointer;font-weight:600}
+details h4{margin:10px 0 2px;font-size:13px;color:var(--navy)}
+details ol{margin:0;padding-left:24px;font-variant-numeric:tabular-nums}
+.box{background:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.box h3{font:600 18px var(--display);margin:0}
+.qr{background:#fff;border:4px solid var(--orange);border-radius:20px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr #qr img,.qr #qr canvas{width:min(78vw,300px)!important;height:auto!important}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.kpi div{background:#fff;border-radius:14px;padding:10px 4px;font-size:12px;color:var(--muted)}
+.kpi b{display:block;font:600 26px var(--display);color:var(--navy)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #eef1f8}
+.row:first-of-type{border-top:0}
+.pill{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.pill.warn{background:#fef3c7;color:var(--warn)}.pill.bad{background:#fee2e2;color:var(--bad)}
+.mini{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#fff;background:var(--orange);padding:6px 12px;border-radius:999px;white-space:nowrap}
+.spin{width:44px;height:44px;border-radius:50%;border:5px solid #dfe5f5;border-top-color:var(--blue);animation:r 1s linear infinite;margin:40px auto}
+@keyframes r{to{transform:rotate(1turn)}}
+</style>
+</head>
+<body>
+<main id="app"><div class="spin" aria-label="กำลังโหลด"></div></main>
+<script>
+const BADGE_BG = {1:'linear-gradient(135deg,#ff9a3c,#d9480a)',10:'linear-gradient(135deg,#3f7bff,#0a2a8a)',
+  25:'linear-gradient(135deg,#ff5a5a,#a3123a)',50:'linear-gradient(135deg,#8b5cf6,#3b1d8f)',100:'linear-gradient(135deg,#ffd36b,#b8860b)'};
+const BADGES = [{at:1,name:'ลงสนามครั้งแรก',icon:'🏀'},{at:10,name:'ผู้เล่นตัวจริง',icon:'⭐'},{at:25,name:'ชู้ตเตอร์',icon:'🔥'},{at:50,name:'กัปตันทีม',icon:'🏅'},{at:100,name:'ตำนานสนาม',icon:'👑'}];
+const TH_M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const app = document.getElementById('app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const thDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? `${+m[3]} ${TH_M[m[2]-1]} ${String(+m[1]+543).slice(-2)}` : esc(d); };
+const show = html => { app.innerHTML = html; window.scrollTo(0, 0); };
+const loading = () => show('<div class="spin" aria-label="กำลังโหลด"></div>');
+const fail = (t, more = '') => show(`<div class="big"><div class="tick no">!</div><div class="t1">${t}</div>${more}</div>`);
+const nav = p => { location.search = '?p=' + p; };
+
+async function api(action, payload = {}) {
+  let res;
+  try {
+    res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, idToken: liff.getIDToken(), ...payload }) }).then(r => r.json());
+  } catch (e) { fail('เชื่อมต่อไม่ได้', '<p class="muted">ลองใหม่อีกครั้ง หรือเช็คอินเทอร์เน็ต</p><button class="cta blue" onclick="location.reload()">ลองใหม่</button>'); throw e; }
+  if (!res.ok && res.error === 'auth') {
+    // token expired: retry once (reload inside LINE gets a fresh token), never loop
+    let tried = false;
+    try { tried = sessionStorage.getItem('hoopAuthRetry') === '1'; sessionStorage.setItem('hoopAuthRetry', '1'); } catch (e) { tried = true; }
+    if (tried) fail('เข้าสู่ระบบไม่สำเร็จ', '<p class="muted">ปิดหน้านี้แล้วเปิดจากเมนูใน LINE ใหม่ ถ้ายังไม่ได้ แจ้งคนดูแลระบบ</p>');
+    else if (liff.isInClient()) location.reload();
+    else { liff.logout(); liff.login({ redirectUri: location.href }); }
+    throw new Error('auth');
+  }
+  try { sessionStorage.removeItem('hoopAuthRetry'); } catch (e) {}
+  if (!res.ok) { fail('ระบบขัดข้อง', '<p class="muted">ลองใหม่อีกครั้ง ถ้ายังไม่ได้แจ้งโค้ช</p><button class="cta blue" onclick="location.reload()">ลองใหม่</button>'); throw new Error(res.error); }
+  return res;
+}
+
+// ---------- สมัคร ----------
+function pageRegister(err = '', f = {}) {
+  const child = f.role === 'child';
+  show(`<h2>สมัครสมาชิก</h2>
+  <p class="muted">สมัครครั้งเดียว แล้วทุกครั้งที่มาเรียนแค่กด "สแกน QR" ที่จอโค้ช · มีน้องหลายคน สมัครทีละคนได้</p>
+  <form id="reg" style="display:flex;flex-direction:column;gap:14px">
+    <div class="seg" role="radiogroup" aria-label="ฉันคือ">
+      <label><input type="radio" name="role" value="parent" ${child ? '' : 'checked'}>ผู้ปกครอง</label>
+      <label><input type="radio" name="role" value="child" ${child ? 'checked' : ''}>ตัวน้องเอง</label>
+    </div>
+    <label class="f">ชื่อเล่นน้อง<input name="nickname" required value="${esc(f.nickname)}" autocomplete="off"></label>
+    <label class="f pOnly">ชื่อ-นามสกุลน้อง<input name="fullName" value="${esc(f.fullName)}"></label>
+    <label class="f pOnly">ชื่อผู้ปกครอง<input name="parentName" value="${esc(f.parentName)}"></label>
+    <label class="f">เบอร์โทรผู้ปกครอง<input name="phone" type="tel" inputmode="tel" required value="${esc(f.phone)}" placeholder="08x-xxx-xxxx"></label>
+    <p class="muted cOnly">ตัวน้องเอง: ใช้ชื่อเล่นและเบอร์เดียวกับที่ผู้ปกครองสมัครไว้ แล้วรอโค้ชอนุมัติ</p>
+    <label class="pdpa"><input type="checkbox" name="pdpa" ${f.pdpa ? 'checked' : ''}>
+      <span>ข้าพเจ้า (ผู้ปกครอง) ยินยอมให้ ${esc(PDPA_OWNER)} เก็บชื่อน้อง ชื่อและเบอร์ผู้ปกครอง และประวัติการมาเรียน เพื่อใช้ติดตามการเข้าเรียนเท่านั้น เก็บไว้จนกว่าจะขอลบ ติดต่อขอดู แก้ไข หรือลบข้อมูลได้ที่ ${esc(PDPA_CONTACT)}</span></label>
+    ${err ? `<p class="err" role="alert">${esc(err)}</p>` : ''}
+    <button class="cta" id="regBtn">สมัคร</button>
+  </form>`);
+  const form = document.getElementById('reg');
+  const sync = () => { const c = form.role.value === 'child';
+    form.querySelectorAll('.pOnly').forEach(e => e.hidden = c); form.querySelectorAll('.cOnly').forEach(e => e.hidden = !c); };
+  form.addEventListener('change', sync); sync();
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    document.getElementById('regBtn').disabled = true;
+    const v = { role: form.role.value, nickname: form.nickname.value, fullName: form.fullName.value,
+      parentName: form.parentName.value, phone: form.phone.value, pdpa: form.pdpa.checked };
+    loading();
+    const r = await api('register', { form: v });
+    if (r.status === 'invalid') return pageRegister(r.error, v);
+    const nk = esc(v.nickname.trim());
+    const again = '<button class="cta ghost" onclick="pageRegister()">สมัครน้องอีกคน</button>';
+    const card = '<button class="cta blue" onclick="nav(\'history\')">ดูบัตรของฉัน</button>';
+    if (r.status === 'created') show(`<div class="big"><div class="tick">✓</div><div class="t1">สมัครน้อง${nk} แล้ว</div><p class="muted">รหัสสมาชิก ${esc(r.studentId)} · มาเรียนวันไหน กด "สแกน QR" ที่จอโค้ชได้เลย</p></div>${card}${again}`);
+    else if (r.status === 'exists') show(`<div class="big"><div class="tick blue">✓</div><div class="t1">LINE นี้ผูกกับน้อง${nk} ไว้แล้ว</div></div>${card}${again}`);
+    else if (r.status === 'pending') show(`<div class="big"><div class="tick wait">⏳</div><div class="t1">รอโค้ชอนุมัติ</div><p class="muted">น้อง${nk} มีในระบบแล้ว โค้ชจะอนุมัติให้ LINE นี้ดูบัตรและเช็คชื่อได้</p></div>`);
+    else if (r.status === 'need_parent') show(`<div class="big"><div class="tick wait">!</div><div class="t1">ให้ผู้ปกครองสมัครก่อน</div><p class="muted">ให้ผู้ปกครองสมัคร แล้วค่อยผูก LINE ของน้องโดยใช้ชื่อเล่นกับเบอร์เดียวกัน</p></div><button class="cta ghost" onclick="pageRegister()">กลับไปหน้าสมัคร</button>`);
+  });
+}
+
+// ---------- สแกน ----------
+async function pageScan() {
+  if (!liff.isApiAvailable('scanCodeV2')) {
+    return show(`<div class="big"><div class="tick blue">📷</div><div class="t1">ใช้กล้องมือถือสแกน QR ของโค้ชได้เลย</div><p class="muted">เครื่องนี้เปิดกล้องจากใน LINE ไม่ได้ เปิดกล้องปกติแล้วสแกน QR ที่จอโค้ช</p></div>`);
+  }
+  show(`<div class="big"><div class="tick blue">📷</div><div class="t1">สแกน QR ที่จอโค้ช</div></div><button class="cta" onclick="pageScan()">เปิดกล้อง</button>`);
+  let value;
+  try { value = (await liff.scanCodeV2()).value; } catch (e) { return; }
+  if (!value) return;
+  let code = null;
+  try { code = new URL(value).searchParams.get('code'); } catch (e) {}
+  if (!code) return fail('QR นี้ไม่ใช่ของคลาส', '<button class="cta" onclick="pageScan()">สแกนใหม่</button>');
+  pageCheckin(code);
+}
+
+// ---------- เช็คชื่อ ----------
+async function pageCheckin(code, studentIds) {
+  loading();
+  const r = await api('checkin', { code, studentIds });
+  if (r.status === 'expired') return fail('QR นี้หมดอายุแล้ว', '<p class="muted">สแกน QR ของวันนี้ที่จอโค้ช</p><button class="cta" onclick="nav(\'scan\')">สแกนใหม่</button>');
+  if (r.status === 'not_registered') return show(`<div class="big"><div class="tick wait">!</div><div class="t1">ยังไม่ได้สมัครสมาชิก</div><p class="muted">สมัครครั้งเดียว แล้วสแกนใหม่ได้เลย</p></div><button class="cta" onclick="nav('register')">ไปหน้าสมัคร</button>`);
+  if (r.status === 'pending') return show(`<div class="big"><div class="tick wait">⏳</div><div class="t1">รอโค้ชอนุมัติ</div><p class="muted">โค้ชอนุมัติแล้วจะเช็คชื่อได้</p></div>`);
+  if (r.status === 'choose') {
+    show(`<h2>วันนี้ใครมาเรียน?</h2>${r.kids.map(k => `<label class="kid"><input type="checkbox" value="${esc(k.studentId)}" ${k.checkedInToday ? '' : 'checked'}>น้อง${esc(k.nickname)}${k.checkedInToday ? ' <span class="muted">(เช็คแล้ว)</span>' : ''}</label>`).join('')}
+      <button class="cta" id="go">ยืนยัน</button>`);
+    document.getElementById('go').onclick = ev => {
+      const ids = [...app.querySelectorAll('.kid input:checked')].map(i => i.value);
+      if (!ids.length) return;
+      ev.target.disabled = true;
+      pageCheckin(code, ids);
+    };
+    return;
+  }
+  show(r.results.map(resultHtml).join('') + '<button class="cta" onclick="nav(\'history\')">ดูบัตรของฉัน</button>');
+}
+
+function resultHtml(x) {
+  const nk = esc(x.nickname);
+  const where = x.packageNo ? `ครั้งที่ ${x.used} จาก 10 · แพ็กเกจที่ ${x.packageNo}` : 'นอกแพ็กเกจ (ค้างต่อ)';
+  const head = x.already
+    ? `<div class="big"><div class="tick blue">✓</div><div class="t1">น้อง${nk} เช็คชื่อแล้ววันนี้ ✓</div><div class="t2">นับวันละ 1 ครั้ง</div><p class="muted">${where}</p></div>`
+    : `<div class="big"><div class="tick">✓</div><div class="t1">น้อง${nk} เช็คชื่อแล้ว</div><div class="t2">${where}</div><p class="muted">มาแล้วรวม ${x.count} ครั้ง</p></div>`;
+  let pk = '';
+  if (x.owed) pk = '<div class="banner due">แพ็กเกจหมดแล้ว ครั้งนี้จะนับเข้าแพ็กเกจใหม่เมื่อต่อกับโค้ช</div>';
+  else if (x.completed) pk = `<div class="banner done">ครบแพ็กเกจที่ ${x.packageNo} แล้ว 🎉<br><span style="font-size:13px">ต่อแพ็กเกจ 10 ครั้ง ${PACKAGE_PRICE.toLocaleString()} บาท ได้ที่โค้ช</span></div>`;
+  else if (x.left === 1) pk = '<div class="banner gold">เหลืออีก 1 ครั้งในแพ็กเกจนี้</div>';
+  const nb = x.newBadge ? `<div class="banner gold">ได้เหรียญใหม่! ${x.newBadge.icon} <b>${esc(x.newBadge.name)}</b></div>` : '';
+  return head + pk + nb;
+}
+
+// ---------- บัตรของฉัน ----------
+async function pageHistory() {
+  const { cards } = await api('history');
+  if (!cards.length) return show(`<div class="big"><div class="tick blue">🏀</div><div class="t1">ยังไม่มีบัตรสมาชิก</div><p class="muted">สมัครครั้งเดียวก็ได้บัตร ถ้าเพิ่งผูก LINE ของน้อง รอโค้ชอนุมัติก่อน</p></div><button class="cta" onclick="nav('register')">สมัครสมาชิก</button>`);
+  show(cards.map(cardHtml).join('<hr style="border:0;height:12px">'));
+}
+
+function cardHtml(c) {
+  const st = c.pkg, b = c.level.badge, next = c.level.next;
+  const p = st.current || st.packages[st.packages.length - 1] || null, used = p ? p.used : 0;
+  const state = st.owed ? `<div class="banner due">แพ็กเกจหมดแล้ว มาเรียนเกิน ${st.owed} ครั้ง ต่อแพ็กเกจได้ที่โค้ช</div>`
+    : p && !st.current ? `<div class="banner done">ครบแพ็กเกจที่ ${p.no} แล้ว 🎉 ต่อแพ็กเกจใหม่ได้ที่โค้ช</div>`
+    : st.left === 1 ? '<div class="banner gold">เหลืออีก 1 ครั้งในแพ็กเกจนี้</div>' : '';
+  const from = b ? b.at : 0, pct = next ? Math.round((c.count - from) / (next.at - from) * 100) : 100;
+  return `<div class="card" style="background:${b ? BADGE_BG[b.at] : 'linear-gradient(135deg,#6b7590,#3b4360)'}">
+    <div class="top"><span>${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
+    <div class="nm">น้อง${esc(c.nickname)}</div><div class="sub">${esc(c.fullName)} · สมาชิกตั้งแต่ ${thDate(c.registeredAt)}</div>
+    <div class="left"><b>${st.current ? st.left : 0}</b><span>ครั้งที่เหลือ</span></div>
+    <div class="pk">${p ? `แพ็กเกจที่ ${p.no} · ซื้อ ${thDate(p.boughtAt)}` : 'ยังไม่มีแพ็กเกจ'}</div>
+    <div class="cnt"><b>${used}</b><span>/ ${p ? p.sessions : 10} ครั้ง</span></div>
+    <div class="dots">${Array.from({ length: p ? p.sessions : 10 }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>
+    <span class="lvl">${b ? b.icon + ' ' + esc(b.name) : 'สมาชิกใหม่'} · มาแล้วรวม ${c.count} ครั้ง</span></div>
+  ${state}
+  <div class="prog">${next ? `<span>มาอีก <b>${next.at - c.count}</b> ครั้ง ได้เหรียญ ${next.icon} ${esc(next.name)}</span>` : '<span>ได้ครบทุกเหรียญแล้ว 👑</span>'}<div class="bar"><i style="width:${pct}%"></i></div></div>
+  <div class="bdg">${BADGES.map(x => `<div class="${c.count >= x.at ? '' : 'off'}"><b>${x.icon}</b>${x.name}<br>${x.at} ครั้ง</div>`).join('')}</div>
+  <details><summary>ประวัติการมาเรียน (${c.count} ครั้ง)</summary>
+    ${st.owed ? `<h4>ค้างต่อแพ็กเกจ</h4><ol>${st.owedDates.slice().reverse().map(d => `<li>${thDate(d)}</li>`).join('')}</ol>` : ''}
+    ${st.packages.slice().reverse().map(k => `<h4>แพ็กเกจที่ ${k.no} · ${k.used}/${k.sessions}</h4><ol>${k.dates.map(d => `<li>${thDate(d)}</li>`).join('')}</ol>`).join('')}
+  </details>`;
+}
+
+// ---------- จอโค้ช ----------
+let coachCode = null, coachTimer = null;
+async function pageCoach() {
+  const v = await api('coach');
+  if (!v.allowed) { clearInterval(coachTimer); return show('<div class="big"><div class="tick wait">🔒</div><div class="t1">หน้านี้สำหรับโค้ช</div>' +
+    `<p class="muted">ถ้าคุณคือโค้ช ส่งรหัสนี้ให้คนตั้งระบบใส่ในแท็บ Coaches</p><p style="font-size:12px;word-break:break-all;user-select:all">${esc(v.yourId)}</p></div>`); }
+  if (v.code !== coachCode || !document.getElementById('qr')) {
+    coachCode = v.code;
+    show(`<h2>เช็คชื่อวันนี้</h2>
+      <div class="qr"><div id="qr"></div><b>${thDate(v.date)}</b><span class="muted">ให้ผู้ปกครองหรือน้องกด "สแกน QR" ในเมนู LINE</span></div>
+      <div id="coachData"></div>`);
+    new QRCode(document.getElementById('qr'), { text: `https://liff.line.me/${LIFF_ID}?p=checkin&code=${v.code}`, width: 600, height: 600, correctLevel: QRCode.CorrectLevel.M });
+  }
+  const pill = f => f ? `<span class="pill ${f.cls}">${esc(f.text)}</span>` : '';
+  const due = v.students.filter(s => s.flag);
+  document.getElementById('coachData').innerHTML = `
+    <div class="kpi"><div><b>${v.today.length}</b>มาวันนี้</div><div><b>${v.newToday.length}</b>สมัครใหม่</div><div><b>${v.pending}</b>รออนุมัติ</div></div>
+    <div class="box"><h3>มาแล้ววันนี้</h3>${v.today.length ? v.today.map(t => `<div class="row"><span>${esc(t.time)} · น้อง${esc(t.nickname)}</span>${pill(t.flag)}</div>`).join('') : '<p class="muted">ยังไม่มีใครเช็คชื่อ</p>'}</div>
+    ${v.newToday.length ? `<div class="box"><h3>สมัครใหม่วันนี้</h3>${v.newToday.map(n => `<div class="row"><span>น้อง${esc(n.nickname)}</span></div>`).join('')}</div>` : ''}
+    <div class="box"><h3>แพ็กเกจที่ต้องดู</h3>${due.length ? due.map(s => `<div class="row"><span>น้อง${esc(s.nickname)} ${pill(s.flag)}</span><button class="mini" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">รับเงินแล้ว · เพิ่มแพ็กเกจ</button></div>`).join('') : '<p class="muted">ทุกคนยังมีครั้งเหลือ</p>'}
+      ${v.pending ? '<p class="muted">มี LINE รออนุมัติ: ติ๊กช่อง approved ในแท็บ Links ของ Google Sheet</p>' : ''}</div>`;
+  document.querySelectorAll('.mini').forEach(b => b.onclick = () => renew(b.dataset.sid, b.dataset.nk, b));
+}
+
+let coachBusy = false; // pause the 15s refresh while a package is being added (no double credit)
+async function renew(sid, nk, btn) {
+  coachBusy = true;
+  try { await renewInner(sid, nk, btn); } finally { coachBusy = false; }
+  pageCoach().catch(() => {});
+}
+async function renewInner(sid, nk, btn) {
+  if (!confirm(`รับเงิน ${PACKAGE_PRICE.toLocaleString()} บาท จากน้อง${nk} แล้ว?\nจะเพิ่มแพ็กเกจ 10 ครั้งให้`)) return;
+  const size = (prompt('ไซซ์เสื้อ (เว้นว่างได้)') || '').trim();
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  const r = await api('addPackage', { studentId: sid, shirtSize: size });
+  alert(r.status === 'added' ? `เพิ่มแพ็กเกจให้น้อง${nk} แล้ว` : 'เพิ่มไม่สำเร็จ');
+}
+
+// ---------- start ----------
+(async function main() {
+  if (typeof liff === 'undefined') return fail('โหลดไม่สำเร็จ', '<p class="muted">เปิดหน้านี้ผ่านเมนูใน LINE</p>');
+  try { await liff.init({ liffId: LIFF_ID }); }
+  catch (e) { return fail('กรุณาเปิดผ่าน LINE', '<p class="muted">กดเมนูในห้องแชท LINE ของคลาส</p>'); }
+  if (!liff.isLoggedIn()) return liff.login({ redirectUri: location.href });
+  const q = new URLSearchParams(location.search), p = q.get('p') || 'history';
+  try {
+    if (p === 'register') pageRegister();
+    else if (p === 'scan') await pageScan();
+    else if (p === 'checkin') await pageCheckin(q.get('code') || '');
+    else if (p === 'coach') { await pageCoach(); coachTimer = setInterval(() => coachBusy || pageCoach().catch(() => {}), 15000); }
+    else await pageHistory();
+  } catch (e) { /* api() already rendered the error */ }
+})();
+</script>
+</body>
+</html>

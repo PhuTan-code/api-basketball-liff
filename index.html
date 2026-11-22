@@ -25,7 +25,7 @@ body{margin:0;background:#f4f6fb;color:#111;font-family:var(--body);font-size:16
 b,strong,summary,th{font-weight:600}
 header.brand{display:flex;align-items:center;gap:10px;max-width:480px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-left)) 0;font-weight:600;color:var(--navy)}
 header.brand img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.card .logo{position:absolute;right:16px;bottom:16px;width:56px;height:56px;border-radius:50%;opacity:.9;z-index:1}
+.card .logo{width:26px;height:26px;border-radius:50%;vertical-align:middle;margin-right:6px}
 main{max-width:480px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left)) 40px;display:flex;flex-direction:column;gap:16px}
 h2{font:600 24px/1.3 var(--display);margin:0;color:var(--navy)}
 p{margin:0}
@@ -245,14 +245,13 @@ function cardHtml(c) {
     : st.left === 1 ? '<div class="banner gold">เหลืออีก 1 ครั้งในแพ็กเกจนี้</div>' : '';
   const from = b ? b.at : 0, pct = next ? Math.round((c.count - from) / (next.at - from) * 100) : 100;
   return `<div class="card" style="background:${b ? BADGE_BG[b.at] : 'linear-gradient(135deg,#6b7590,#3b4360)'}">
-    <div class="top"><span>${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
+    <div class="top"><span><img class="logo" src="${document.querySelector('header.brand img').src}" alt="">${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
     <div class="nm">น้อง${esc(c.nickname)}</div><div class="sub">${esc(c.fullName)} · สมาชิกตั้งแต่ ${thDate(c.registeredAt)}</div>
     ${single ? `<div class="pk">จ่ายรายครั้ง</div><div class="cnt"><b>${c.count}</b><span>ครั้งที่มาเรียน</span></div>` : `
     <div class="left"><b>${st.current ? st.left : 0}</b><span>ครั้งที่เหลือ</span></div>
     <div class="pk">${p ? `แพ็กเกจที่ ${p.no} · ซื้อ ${thDate(p.boughtAt)}` : 'ยังไม่มีแพ็กเกจ'}</div>
     <div class="cnt"><b>${used}</b><span>/ ${p ? p.sessions : 10} ครั้ง</span></div>
     <div class="dots">${Array.from({ length: p ? p.sessions : 10 }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>`}
-    <img class="logo" src="${document.querySelector('header.brand img').src}" alt="">
     <span class="lvl">${b ? b.icon + ' ' + esc(b.name) : 'สมาชิกใหม่'} · มาแล้วรวม ${c.count} ครั้ง</span></div>
   ${state}
   <div class="prog">${next ? `<span>มาอีก <b>${next.at - c.count}</b> ครั้ง ได้เหรียญ ${next.icon} ${esc(next.name)}</span>` : '<span>ได้ครบทุกเหรียญแล้ว 👑</span>'}<div class="bar"><i style="width:${pct}%"></i></div></div>

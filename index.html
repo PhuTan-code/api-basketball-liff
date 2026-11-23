@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>API Basketball Academy</title>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600&family=Sarabun:wght@400;600&display=swap">
 <script>
 // ===== ตั้งค่า (ไม่มีความลับในไฟล์นี้) =====
@@ -278,8 +281,19 @@ function resultHtml(x) {
 }
 
 // ---------- บัตรของฉัน ----------
+// Last card per LINE user, shown instantly while the fresh one loads (Apps Script takes 1-3s).
+const cardKey = () => { try { return 'hoopCards:' + liff.getDecodedIDToken().sub; } catch (e) { return ''; } };
+const cardsCache = (v) => { try { const k = cardKey(); if (!k) return null;
+  if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
 async function pageHistory() {
+  const old = cardsCache();
+  if (old) try { renderCards(JSON.parse(old)); } catch (e) {}
   const { cards } = await api('history');
+  const fresh = JSON.stringify(cards);
+  cardsCache(fresh);
+  if (fresh !== old) renderCards(cards);
+}
+function renderCards(cards) {
   if (!cards.length) return show(`<div class="big"><div class="tick blue">🏀</div><div class="t1">ยังไม่มีบัตรสมาชิก</div><p class="muted">สมัครครั้งเดียวก็ได้บัตร ถ้าเพิ่งผูก LINE ของน้อง รอโค้ชอนุมัติก่อน</p></div><button class="cta" onclick="nav('register')">สมัครสมาชิก</button>`);
   show(cards.map(cardHtml).join('<hr style="border:0;height:12px">'));
 }

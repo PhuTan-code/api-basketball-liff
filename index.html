@@ -363,7 +363,8 @@ async function shareInvite(sid, btn) {
       if (res) alert('ส่งลิงก์แล้ว');
     } else if (liff.isInClient()) location.href = 'https://line.me/R/share?text=' + encodeURIComponent(text);
     else { // outside the LINE app (e.g. desktop): line.me/R/share only opens LINE's homepage
-      try { await navigator.clipboard.writeText(text); } catch (e) {}
+      // clipboard can hang without focus/permission: never let it block showing the link
+      try { await Promise.race([navigator.clipboard.writeText(text), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
       prompt('คัดลอกลิงก์นี้ส่งให้อีกคนทางแชท LINE (ใช้ได้ครั้งเดียว ภายใน 24 ชม.)', url);
     }
   } finally { btn.disabled = false; }

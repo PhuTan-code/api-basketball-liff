@@ -331,7 +331,47 @@ function cardHtml(c) {
   <div class="prog">${next ? `<span>มาอีก <b>${next.at - c.count}</b> ครั้ง ได้เหรียญ ${next.icon} ${esc(next.name)}</span>` : '<span>ได้ครบทุกเหรียญแล้ว 👑</span>'}<div class="bar"><i style="width:${pct}%"></i></div></div>
   <div class="bdg">${BADGES.map(x => `<div class="${c.count >= x.at ? '' : 'off'}"><b>${x.icon}</b>${x.name}<br>${x.at} ครั้ง</div>`).join('')}</div>
   ${has(st) ? `<details><summary>ประวัติคลาสกลุ่ม (${st.total} ครั้ง)</summary>${datesHtml(st, false)}</details>` : ''}
-  ${has(pv) ? `<details><summary>ประวัติคลาสเดี่ยว (${pv.total} ชม.)</summary>${datesHtml(pv, true)}</details>` : ''}`;
+  ${has(pv) ? `<details><summary>ประวัติคลาสเดี่ยว (${pv.total} ชม.)</summary>${datesHtml(pv, true)}</details>` : ''}
+  ${c.active ? `<button class="cta ghost" onclick="shareInvite('${esc(c.studentId)}', this)" data-nk="${esc(c.nickname)}">ชวนน้อง/ผู้ปกครองอีกคนใช้ LINE ของตัวเอง</button>` : ''}`;
+}
+
+// ---------- ลิงก์ชวน (ใช้ได้ครั้งเดียว ภายใน 24 ชม.) ----------
+async function shareInvite(sid, btn) {
+  const nk = btn.dataset.nk;
+  btn.disabled = true;
+  try {
+    const r = await api('invite', { studentId: sid });
+    if (r.status !== 'created') return alert('สร้างลิงก์ไม่ได้ — LINE นี้ยังไม่ได้รับอนุมัติให้ดูบัตรน้องคนนี้');
+    const url = `https://liff.line.me/${LIFF_ID}?p=join&t=${r.token}`;
+    const text = `ลิงก์ผูก LINE กับบัตรสมาชิกน้อง${nk} · ${ACADEMY}\nกดเปิดใน LINE ได้ครั้งเดียว ภายใน 24 ชม.\n${url}`;
+    if (liff.isApiAvailable('shareTargetPicker')) {
+      const res = await liff.shareTargetPicker([{ type: 'text', text }]);
+      if (res) alert('ส่งลิงก์แล้ว');
+    } else location.href = 'https://line.me/R/share?text=' + encodeURIComponent(text);
+  } finally { btn.disabled = false; }
+}
+
+function pageJoin(token) {
+  show(`<div class="big"><div class="tick blue">🔗</div><div class="t1">ผูก LINE นี้กับบัตรสมาชิก</div>
+    <p class="muted">ลิงก์นี้มาจากผู้ปกครองที่สมัครไว้แล้ว ไม่ต้องกรอกชื่อหรือเบอร์</p></div>
+    <div class="seg" role="radiogroup" aria-label="ฉันคือ">
+      <label><input type="radio" name="jr" value="child" checked>ตัวน้องเอง</label>
+      <label><input type="radio" name="jr" value="parent">ผู้ปกครองอีกคน</label>
+    </div>
+    <button class="cta" id="joinBtn">ผูก LINE นี้</button>`);
+  document.getElementById('joinBtn').onclick = async ev => {
+    ev.target.disabled = true;
+    const role = app.querySelector('input[name=jr]:checked').value;
+    loading();
+    const r = await api('join', { token, role });
+    const nk = esc(r.nickname), card = '<button class="cta blue" onclick="nav(\'history\')">ดูบัตรของฉัน</button>';
+    const again = '<p class="muted">ขอลิงก์ใหม่ได้จากคนที่ส่งมา: เปิด "บัตรของฉัน" แล้วกดปุ่ม "ชวนน้อง/ผู้ปกครองอีกคน"</p>';
+    if (r.status === 'joined') show(`<div class="big"><div class="tick">✓</div><div class="t1">ผูกกับน้อง${nk} แล้ว</div><p class="muted">มาเรียนวันไหน กด "สแกน QR" ที่จอโค้ชได้เลย</p></div>${card}`);
+    else if (r.status === 'exists') show(`<div class="big"><div class="tick blue">✓</div><div class="t1">LINE นี้ผูกกับน้อง${nk} อยู่แล้ว</div></div>${card}`);
+    else if (r.status === 'used') fail('ลิงก์นี้ถูกใช้ไปแล้ว', again);
+    else if (r.status === 'expired') fail('ลิงก์หมดอายุแล้ว (เกิน 24 ชม.)', again);
+    else fail('ลิงก์ไม่ถูกต้อง', again);
+  };
 }
 
 // ---------- จอโค้ช ----------
@@ -402,6 +442,7 @@ function renew(sid, nk, btn, plan) {
     if (p === 'register') pageRegister();
     else if (p === 'scan') await pageScan();
     else if (p === 'checkin') await pageCheckin(q.get('code') || '');
+    else if (p === 'join') pageJoin(q.get('t') || '');
     else if (p === 'coach') { await pageCoach(); coachTimer = setInterval(() => coachBusy || pageCoach().catch(() => {}), 15000); }
     else await pageHistory();
   } catch (e) { /* api() already rendered the error */ }

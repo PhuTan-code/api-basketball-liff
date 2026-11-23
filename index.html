@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>API Basketball Academy</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600&family=Sarabun:wght@400;600&display=swap">
 <script>
 // ===== ตั้งค่า (ไม่มีความลับในไฟล์นี้) =====
 const LIFF_ID = '2012745701-mzhuuxrn';
@@ -14,14 +14,16 @@ const PDPA_OWNER = 'API Basketball Academy';           // ผู้เก็บ�
 const PDPA_CONTACT = 'LINE OA API Basketball Academy';    // เช่น LINE OA นี้ / เบอร์โค้ช
 const PACKAGE_PRICE = 2990;
 const SINGLE_PRICE = 300;
-// ปุ่มรับเงินบนจอโค้ช (ราคาจริงอยู่ใน core.gs PLANS)
+// แพ็กเกจ (ราคาจริงอยู่ใน core.gs PLANS) — ใช้ทั้งหน้าสมัครและปุ่มรับเงินบนจอโค้ช · เสื้อ: โค้ชเลือกเองตอนรับเงิน
 const PLAN_UI = {
-  single: { label: 'รับ 300 · รายครั้ง', what: 'ค่าเรียนรายครั้ง 300 บาท', shirt: false },
-  pkg10: { label: 'รับ 2,990 · 10 ครั้ง', what: 'แพ็กเกจ 10 ครั้ง 2,990 บาท (แถมเสื้อ)', shirt: true },
-  priv1: { label: 'รับ 500 · 1 ชม.', what: 'คลาสเดี่ยว 1 ชม. 500 บาท', shirt: false },
-  priv5: { label: 'รับ 2,000 · 5 ชม.', what: 'คลาสเดี่ยว 5 ชม. 2,000 บาท', shirt: false },
-  priv10: { label: 'รับ 4,000 · 10 ชม.', what: 'คลาสเดี่ยว 10 ชม. 4,000 บาท (แถมเสื้อ)', shirt: true },
+  single: { sessions: 1, course: 'group', name: 'รายครั้ง', price: 300, unit: 'ต่อครั้ง', sub: 'มาวันไหนจ่ายวันนั้น', label: 'รับ 300 · รายครั้ง' },
+  pkg10: { sessions: 10, course: 'group', name: '10 ครั้ง', price: 2990, unit: 'แพ็กเกจ', sub: 'เฉลี่ยครั้งละ 299', label: 'รับ 2,990 · 10 ครั้ง' },
+  priv1: { sessions: 1, course: 'private', name: '1 ชั่วโมง', price: 500, unit: 'ต่อชั่วโมง', sub: 'ลองเรียนตัวต่อตัว', label: 'รับ 500 · 1 ชม.' },
+  priv5: { sessions: 5, course: 'private', name: '5 ชั่วโมง', price: 2000, unit: 'แพ็กเกจ', sub: 'เฉลี่ยชั่วโมงละ 400', label: 'รับ 2,000 · 5 ชม.' },
+  priv10: { sessions: 10, course: 'private', name: '10 ชั่วโมง', price: 4000, unit: 'แพ็กเกจ', sub: 'เฉลี่ยชั่วโมงละ 400', label: 'รับ 4,000 · 10 ชม.' },
 };
+const planName = k => PLAN_UI[k] ? `${PLAN_UI[k].course === 'private' ? 'เดี่ยว' : 'กลุ่ม'} ${PLAN_UI[k].name}` : '';
+const baht = n => n.toLocaleString();
 </script>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -98,6 +100,33 @@ details ol{margin:0;padding-left:24px;font-variant-numeric:tabular-nums}
 .pill{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
 .pill.warn{background:#fef3c7;color:var(--warn)}.pill.bad{background:#fee2e2;color:var(--bad)}
 .mini{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:#fff;background:var(--orange);padding:6px 12px;border-radius:999px;white-space:nowrap}
+/* ตัวเลือกแพ็กเกจตอนสมัคร */
+.plans{display:flex;flex-direction:column;gap:8px}
+.plans h4{margin:6px 0 0;font:500 13px var(--body);letter-spacing:.08em;color:var(--muted)}
+.pl{position:relative;display:flex;align-items:center;gap:12px;border:1.5px solid #cfd6ea;border-radius:16px;padding:12px 16px;background:#fff;cursor:pointer}
+.pl input{position:absolute;opacity:0}
+.pl .nm2{flex:1;display:flex;flex-direction:column;line-height:1.3}.pl .nm2 small{color:var(--muted);font-size:13px}
+.pl .pr{text-align:right;line-height:1.1}.pl .pr b{display:block;font:600 24px/1 'Kanit',var(--body);color:var(--navy)}.pl .pr small{font-size:12px;color:var(--muted)}
+.pl:has(input:checked){border-color:var(--blue);background:#eef3ff;box-shadow:0 0 0 3px rgba(31,86,214,.15)}
+.pl:has(input:checked)::after{content:"✓";position:absolute;left:-8px;top:-8px;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.pl.pv{background:linear-gradient(135deg,#1c1813,#0c0b0a);border-color:#3a3226;color:#f3e7c8}
+.pl.pv .nm2 small,.pl.pv .pr small{color:#b9a780}.pl.pv .pr b{color:#e8c36a}
+.pl.pv:has(input:checked){border-color:#e8c36a;background:linear-gradient(135deg,#2a2218,#0c0b0a);box-shadow:0 0 0 3px rgba(232,195,106,.25)}
+.pl.pv:has(input:checked)::after{background:#e8c36a;color:#1c1813}
+/* บัตร: กลุ่ม = น้ำเงินแบรนด์ + สีเหรียญเป็นแถบ, เดี่ยว = ดำทอง */
+.card.group{background:linear-gradient(150deg,#2a60e6 0%,#0a2a8a 58%,#061a5c 100%)}
+.card .tier{position:absolute;left:0;top:0;right:0;height:6px}
+.card .kind{margin-top:10px;font:500 11px var(--body);letter-spacing:.2em;opacity:.9}
+.card .cnt b,.card .left b{font-family:'Kanit',var(--body)}
+.card.priv{background:radial-gradient(120% 90% at 100% 0%,#3d3122 0%,#15120e 45%,#0a0a0b 100%);color:#f3e7c8;border:1px solid rgba(232,195,106,.35);box-shadow:0 14px 28px rgba(0,0,0,.35)}
+.card.priv::after{background:rgba(232,195,106,.08)}
+.card.priv .kind,.card.priv .cnt b,.card.priv .left b{color:#e8c36a}
+.card.priv .dots i{background:rgba(232,195,106,.18)}.card.priv .dots i.on{background:linear-gradient(90deg,#f4d98b,#c9a24a)}
+.card.priv .lvl{background:rgba(232,195,106,.15);color:#f4d98b}
+.pay{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f4f6fb;border-radius:12px;padding:10px 12px;font-size:14px}
+.pay input[type=text]{font:inherit;width:84px;padding:6px 10px;border:1.5px solid #cfd6ea;border-radius:10px}
+.mini.req{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--orange)}
+.mini.ghost{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px #cfd6ea}
 .spin{width:44px;height:44px;border-radius:50%;border:5px solid #dfe5f5;border-top-color:var(--blue);animation:r 1s linear infinite;margin:40px auto}
 @keyframes r{to{transform:rotate(1turn)}}
 </style>
@@ -139,6 +168,10 @@ async function api(action, payload = {}) {
 }
 
 // ---------- สมัคร ----------
+const planCards = (keys, sel) => keys.map(k => { const p = PLAN_UI[k];
+  return `<label class="pl${p.course === 'private' ? ' pv' : ''}"><input type="radio" name="plan" value="${k}" ${sel === k ? 'checked' : ''}>
+    <span class="nm2">${p.name}<small>${p.sub}</small></span><span class="pr"><b>${baht(p.price)}</b><small>${p.unit}</small></span></label>`; }).join('');
+const v_plan = form => form.role.value === 'parent' ? ((form.querySelector('input[name=plan]:checked') || {}).value || '') : '';
 function pageRegister(err = '', f = {}) {
   const child = f.role === 'child';
   show(`<h2>สมัครสมาชิก</h2>
@@ -152,6 +185,11 @@ function pageRegister(err = '', f = {}) {
     <label class="f pOnly">ชื่อ-นามสกุลน้อง<input name="fullName" value="${esc(f.fullName)}"></label>
     <label class="f pOnly">ชื่อผู้ปกครอง<input name="parentName" value="${esc(f.parentName)}"></label>
     <label class="f">เบอร์โทรผู้ปกครอง<input name="phone" type="tel" inputmode="tel" required value="${esc(f.phone)}" placeholder="08x-xxx-xxxx"></label>
+    <div class="plans pOnly" role="radiogroup" aria-label="แพ็กเกจที่สนใจ">
+      <span class="f">แพ็กเกจที่สนใจ <span class="muted">จ่ายกับโค้ชวันที่มาเรียน</span></span>
+      <h4>คลาสกลุ่ม · 2 ชม.</h4>${planCards(['single', 'pkg10'], f.plan)}
+      <h4>คลาสเดี่ยว 1:1</h4>${planCards(['priv1', 'priv5', 'priv10'], f.plan)}
+    </div>
     <p class="muted cOnly">ตัวน้องเอง: ใช้ชื่อเล่นและเบอร์เดียวกับที่ผู้ปกครองสมัครไว้ แล้วรอโค้ชอนุมัติ</p>
     <label class="pdpa"><input type="checkbox" name="pdpa" ${f.pdpa ? 'checked' : ''}>
       <span>ข้าพเจ้า (ผู้ปกครอง) ยินยอมให้ ${esc(PDPA_OWNER)} เก็บชื่อน้อง ชื่อและเบอร์ผู้ปกครอง และประวัติการมาเรียน เพื่อใช้ติดตามการเข้าเรียนเท่านั้น เก็บไว้จนกว่าจะขอลบ ติดต่อขอดู แก้ไข หรือลบข้อมูลได้ที่ ${esc(PDPA_CONTACT)}</span></label>
@@ -166,14 +204,16 @@ function pageRegister(err = '', f = {}) {
     ev.preventDefault();
     document.getElementById('regBtn').disabled = true;
     const v = { role: form.role.value, nickname: form.nickname.value, fullName: form.fullName.value,
-      parentName: form.parentName.value, phone: form.phone.value, pdpa: form.pdpa.checked };
+      parentName: form.parentName.value, phone: form.phone.value, pdpa: form.pdpa.checked,
+      plan: v_plan(form) };
+    if (v.role === 'parent' && !v.plan) { document.getElementById('regBtn').disabled = false; return pageRegister('เลือกแพ็กเกจที่สนใจ', v); }
     loading();
     const r = await api('register', { form: v });
     if (r.status === 'invalid') return pageRegister(r.error, v);
     const nk = esc(v.nickname.trim());
     const again = '<button class="cta ghost" onclick="pageRegister()">สมัครน้องอีกคน</button>';
     const card = '<button class="cta blue" onclick="nav(\'history\')">ดูบัตรของฉัน</button>';
-    if (r.status === 'created') show(`<div class="big"><div class="tick">✓</div><div class="t1">สมัครน้อง${nk} แล้ว</div><p class="muted">รหัสสมาชิก ${esc(r.studentId)} · มาเรียนวันไหน กด "สแกน QR" ที่จอโค้ชได้เลย</p></div>${card}${again}`);
+    if (r.status === 'created') show(`<div class="big"><div class="tick">✓</div><div class="t1">สมัครน้อง${nk} แล้ว</div><p class="muted">รหัสสมาชิก ${esc(r.studentId)}${v.plan ? ` · สนใจ${esc(planName(v.plan))} ${baht(PLAN_UI[v.plan].price)} บาท จ่ายกับโค้ชวันแรกที่มา` : ''} · มาเรียนวันไหน กด "สแกน QR" ที่จอโค้ชได้เลย</p></div>${card}${again}`);
     else if (r.status === 'exists') show(`<div class="big"><div class="tick blue">✓</div><div class="t1">LINE นี้ผูกกับน้อง${nk} ไว้แล้ว</div></div>${card}${again}`);
     else if (r.status === 'pending') show(`<div class="big"><div class="tick wait">⏳</div><div class="t1">รอโค้ชอนุมัติ</div><p class="muted">น้อง${nk} มีในระบบแล้ว โค้ชจะอนุมัติให้ LINE นี้ดูบัตรและเช็คชื่อได้</p></div>`);
     else if (r.status === 'need_parent') show(`<div class="big"><div class="tick wait">!</div><div class="t1">ให้ผู้ปกครองสมัครก่อน</div><p class="muted">ให้ผู้ปกครองสมัคร แล้วค่อยผูก LINE ของน้องโดยใช้ชื่อเล่นกับเบอร์เดียวกัน</p></div><button class="cta ghost" onclick="pageRegister()">กลับไปหน้าสมัคร</button>`);
@@ -245,15 +285,17 @@ async function pageHistory() {
 }
 
 function has(st) { return st && (st.total || st.packages.length); }
-// One course inside the card: package progress (group = ครั้ง, private = ชม.).
-function blockHtml(st, priv) {
-  const unit = priv ? 'ชม.' : 'ครั้ง', name = priv ? 'คลาสเดี่ยว' : 'คลาสกลุ่ม';
+// One course = one card: package progress (group = ครั้ง, private = ชม.).
+function blockHtml(st, priv, req) {
+  const unit = priv ? 'ชม.' : 'ครั้ง';
   const p = st.current || st.packages[st.packages.length - 1] || null, used = p ? p.used : 0;
   if (st.mode === 'single' && !(st.current && st.current.sessions > 1))
-    return `<div class="pk">${name} · จ่าย${priv ? 'รายชั่วโมง' : 'รายครั้ง'}</div><div class="cnt"><b>${st.total}</b><span>${unit}ที่มาเรียน</span></div>`;
-  return `<div class="pk">${name} · ${p ? `แพ็กเกจที่ ${p.no} · ซื้อ ${thDate(p.boughtAt)} · เหลือ ${st.current ? st.left : 0} ${unit}` : 'ยังไม่มีแพ็กเกจ'}</div>
-    <div class="cnt"><b>${used}</b><span>/ ${p ? p.sessions : 10} ${unit}</span></div>
-    <div class="dots">${Array.from({ length: p ? p.sessions : 10 }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>`;
+    return `<div class="pk">จ่าย${priv ? 'รายชั่วโมง' : 'รายครั้ง'}</div><div class="cnt"><b>${st.total}</b><span>${unit}ที่มาเรียน</span></div>`;
+  const n = p ? p.sessions : (PLAN_UI[req] ? PLAN_UI[req].sessions || 10 : 10);
+  return `<div class="left"><b>${st.current ? st.left : 0}</b><span>${unit}ที่เหลือ</span></div>
+    <div class="pk">${p ? `แพ็กเกจที่ ${p.no} · ซื้อ ${thDate(p.boughtAt)}` : PLAN_UI[req] ? `สนใจ ${esc(PLAN_UI[req].name)} · จ่ายกับโค้ช` : 'ยังไม่มีแพ็กเกจ'}</div>
+    <div class="cnt"><b>${used}</b><span>/ ${n} ${unit}</span></div>
+    <div class="dots">${Array.from({ length: n }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</div>`;
 }
 function stateHtml(st, priv) {
   const unit = priv ? 'ชม.' : 'ครั้ง', name = priv ? 'คลาสเดี่ยว' : '';
@@ -273,18 +315,23 @@ function datesHtml(st, priv) {
 
 function cardHtml(c) {
   const st = c.pkg, pv = c.priv, b = c.level.badge, next = c.level.next;
-  const showG = has(st) || !has(pv), showP = has(pv);
+  const reqP = PLAN_UI[c.requestedPlan] && PLAN_UI[c.requestedPlan].course === 'private';
+  const showG = has(st) || (!has(pv) && !reqP), showP = has(pv) || reqP;
   const from = b ? b.at : 0, pct = next ? Math.round((c.count - from) / (next.at - from) * 100) : 100;
-  return `<div class="card" style="background:${b ? BADGE_BG[b.at] : 'linear-gradient(135deg,#6b7590,#3b4360)'}">
-    <div class="top"><span><img class="logo" src="${document.querySelector('header.brand img').src}" alt="">${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
-    <div class="nm">น้อง${esc(c.nickname)}</div><div class="sub">${esc(c.fullName)} · สมาชิกตั้งแต่ ${thDate(c.registeredAt)}</div>
-    ${showG ? blockHtml(st, false) : ''}${showP ? blockHtml(pv, true) : ''}
-    <span class="lvl">${b ? b.icon + ' ' + esc(b.name) : 'สมาชิกใหม่'} · มาแล้วรวม ${c.count} ครั้ง</span></div>
+  const logo = document.querySelector('header.brand img').src;
+  const one = (priv, first) => `<div class="card ${priv ? 'priv' : 'group'}">
+    ${priv ? '' : `<div class="tier" style="background:${b ? BADGE_BG[b.at] : 'rgba(255,255,255,.25)'}"></div>`}
+    <div class="top"><span><img class="logo" src="${logo}" alt="">${ACADEMY}</span><span>${esc(c.studentId)}</span></div>
+    <div class="kind">${priv ? 'PRIVATE · 1:1' : 'GROUP CLASS'}</div>
+    <div class="nm">น้อง${esc(c.nickname)}</div><div class="sub">${[esc(c.fullName), c.registeredAt ? `สมาชิกตั้งแต่ ${thDate(c.registeredAt)}` : ''].filter(Boolean).join(' · ')}</div>
+    ${blockHtml(priv ? pv : st, priv, priv === reqP ? c.requestedPlan : '')}
+    ${first ? `<span class="lvl">${b ? b.icon + ' ' + esc(b.name) : 'สมาชิกใหม่'} · มาแล้วรวม ${c.count} ครั้ง</span>` : ''}</div>`;
+  return `${showG ? one(false, true) : ''}${showP ? one(true, !showG) : ''}
   ${showG ? stateHtml(st, false) : ''}${showP ? stateHtml(pv, true) : ''}
   <div class="prog">${next ? `<span>มาอีก <b>${next.at - c.count}</b> ครั้ง ได้เหรียญ ${next.icon} ${esc(next.name)}</span>` : '<span>ได้ครบทุกเหรียญแล้ว 👑</span>'}<div class="bar"><i style="width:${pct}%"></i></div></div>
   <div class="bdg">${BADGES.map(x => `<div class="${c.count >= x.at ? '' : 'off'}"><b>${x.icon}</b>${x.name}<br>${x.at} ครั้ง</div>`).join('')}</div>
-  ${showG ? `<details><summary>ประวัติคลาสกลุ่ม (${st.total} ครั้ง)</summary>${datesHtml(st, false)}</details>` : ''}
-  ${showP ? `<details><summary>ประวัติคลาสเดี่ยว (${pv.total} ชม.)</summary>${datesHtml(pv, true)}</details>` : ''}`;
+  ${has(st) ? `<details><summary>ประวัติคลาสกลุ่ม (${st.total} ครั้ง)</summary>${datesHtml(st, false)}</details>` : ''}
+  ${has(pv) ? `<details><summary>ประวัติคลาสเดี่ยว (${pv.total} ชม.)</summary>${datesHtml(pv, true)}</details>` : ''}`;
 }
 
 // ---------- จอโค้ช ----------
@@ -313,25 +360,35 @@ async function pageCoach() {
   document.getElementById('coachData').innerHTML = `
     <div class="kpi"><div><b>${today.length}</b>มาวันนี้</div><div><b>${v.newToday.length}</b>สมัครใหม่</div><div><b>${v.pending}</b>รออนุมัติ</div></div>
     <div class="box"><h3>มาแล้ววันนี้</h3>${today.length ? today.map(t => `<div class="row"><span>${esc(t.time)} · น้อง${esc(t.nickname)}</span>${pill(t.flag)}</div>`).join('') : '<p class="muted">ยังไม่มีใครเช็คชื่อ</p>'}</div>
-    ${v.newToday.length ? `<div class="box"><h3>สมัครใหม่วันนี้</h3>${v.newToday.map(n => `<div class="row"><span>น้อง${esc(n.nickname)}</span></div>`).join('')}</div>` : ''}
-    <div class="box"><h3>ค่าเรียนที่ต้องดู</h3>${due.length ? due.map(s => `<div class="row" style="flex-wrap:wrap"><span>น้อง${esc(s.nickname)} ${pill(priv ? s.privFlag : s.flag)}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${plans.map(k => `<button class="mini" data-plan="${k}" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">${PLAN_UI[k].label}</button>`).join('')}</span></div>`).join('') : '<p class="muted">ไม่มีใครค้างจ่าย</p>'}
+    ${v.newToday.length ? `<div class="box"><h3>สมัครใหม่วันนี้</h3>${v.newToday.map(n => `<div class="row"><span>น้อง${esc(n.nickname)}</span>${n.requestedPlan ? `<span class="pill warn">สนใจ${esc(planName(n.requestedPlan))}</span>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="box"><h3>ค่าเรียนที่ต้องดู</h3>${due.length ? due.map(s => `<div class="row" style="flex-wrap:wrap"><span>น้อง${esc(s.nickname)} ${pill(priv ? s.privFlag : s.flag)}${s.requestedPlan ? ` <span class="muted">สนใจ${esc(planName(s.requestedPlan))}</span>` : ''}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${plans.map(k => `<button class="mini${k === s.requestedPlan ? ' req' : ''}" data-plan="${k}" data-sid="${esc(s.studentId)}" data-nk="${esc(s.nickname)}">${PLAN_UI[k].label}</button>`).join('')}</span></div>`).join('') : '<p class="muted">ไม่มีใครค้างจ่าย</p>'}
       ${v.pending ? '<p class="muted">มี LINE รออนุมัติ: ติ๊กช่อง approved ในแท็บ Links ของ Google Sheet</p>' : ''}</div>`;
   document.querySelectorAll('.mini').forEach(b => b.onclick = () => renew(b.dataset.sid, b.dataset.nk, b, b.dataset.plan));
 }
 
-let coachBusy = false; // pause the 15s refresh while a package is being added (no double credit)
-async function renew(sid, nk, btn, plan) {
+let coachBusy = false; // pause the 15s refresh while the pay panel is open (no double credit)
+// Pay panel under the kid's row: the coach decides each time whether a shirt goes with it.
+function renew(sid, nk, btn, plan) {
+  if (coachBusy) return;
   coachBusy = true;
-  try { await renewInner(sid, nk, btn, plan); } finally { coachBusy = false; }
-  pageCoach().catch(() => {});
-}
-async function renewInner(sid, nk, btn, plan) {
-  const ui = PLAN_UI[plan];
-  if (!confirm(`รับเงิน${ui.what} จากน้อง${nk} แล้ว?`)) return;
-  const size = ui.shirt ? (prompt('ไซซ์เสื้อ (เว้นว่างได้)') || '').trim() : '';
-  btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
-  const r = await api('addPackage', { studentId: sid, shirtSize: size, plan });
-  alert(r.status === 'added' ? `บันทึก${ui.what}ให้น้อง${nk} แล้ว` : 'บันทึกไม่สำเร็จ');
+  const ui = PLAN_UI[plan], row = btn.closest('.row'), box = document.createElement('div');
+  box.className = 'pay';
+  box.innerHTML = `<span>รับ <b>${baht(ui.price)}</b> บาท · ${esc(planName(plan))} จากน้อง${esc(nk)}</span>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" class="sg"> แจกเสื้อ</label>
+    <input type="text" class="ss" placeholder="ไซซ์" hidden>
+    <button class="mini ok">รับเงินแล้ว</button><button class="mini ghost no">ยกเลิก</button>`;
+  row.appendChild(box);
+  const sg = box.querySelector('.sg'), ss = box.querySelector('.ss');
+  sg.onchange = () => { ss.hidden = !sg.checked; if (sg.checked) ss.focus(); };
+  const done = () => { coachBusy = false; pageCoach().catch(() => {}); };
+  box.querySelector('.no').onclick = () => { box.remove(); done(); };
+  box.querySelector('.ok').onclick = async ev => {
+    ev.target.disabled = true; ev.target.textContent = 'กำลังบันทึก…';
+    try {
+      const r = await api('addPackage', { studentId: sid, plan, shirtGiven: sg.checked, shirtSize: sg.checked ? ss.value.trim() : '' });
+      alert(r.status === 'added' ? `บันทึก${planName(plan)}ให้น้อง${nk} แล้ว${sg.checked ? ' + แจกเสื้อ' : ''}` : 'บันทึกไม่สำเร็จ');
+    } finally { done(); }
+  };
 }
 
 // ---------- start ----------
